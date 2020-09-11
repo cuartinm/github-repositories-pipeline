@@ -41,6 +41,7 @@ node {
   try {
     if (pull_request) {
       checkout("$clone_url", target_branch)
+      init()
       plan()
       if("$merged".toBoolean()) {
         build()
