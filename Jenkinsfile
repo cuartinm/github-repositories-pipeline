@@ -124,7 +124,7 @@ def plan() {
 }
 
 def apply() {
-  stage('Plan') {
+  stage('Apply') {
     withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
       try {
         def plan_command = sh(script: "terraform apply -var='github_token=$GITHUB_ACCESS_TOKEN' -auto-approve", returnStatus: true)
