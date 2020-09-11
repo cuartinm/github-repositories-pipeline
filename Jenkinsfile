@@ -98,8 +98,19 @@ def checkout(repo, branch) {
   }
 }
 
+def init() {
+  stage('Init') {
+    try {
+      def plan_command = sh(script: "terraform init", returnStatus: true)
+    } catch(Exception e) {
+      currentBuild.result = 'FAILURE'
+      echo "Exception: ${e}"
+    }
+  }
+}
+
 def plan() {
-  stage('Terraform Plan') {
+  stage('Plan') {
     withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
       try {
         def plan_command = sh(script: "terraform plan -var='github_token=$GITHUB_ACCESS_TOKEN'", returnStatus: true)
