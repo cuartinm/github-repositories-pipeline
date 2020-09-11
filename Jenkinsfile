@@ -44,7 +44,7 @@ node {
       init()
       plan()
       if("$merged".toBoolean()) {
-        build()
+        apply()
       }
       setGitHubStatus("continuous-integration", "success", "your Job was successful. You can check your logs in the following link ->", "${env.RUN_DISPLAY_URL}")
     }
@@ -115,6 +115,19 @@ def plan() {
     withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
       try {
         def plan_command = sh(script: "terraform plan -var='github_token=$GITHUB_ACCESS_TOKEN'", returnStatus: true)
+      } catch(Exception e) {
+        currentBuild.result = 'FAILURE'
+        echo "Exception: ${e}"
+      }
+    }
+  }
+}
+
+def apply() {
+  stage('Plan') {
+    withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
+      try {
+        def plan_command = sh(script: "terraform apply -var='github_token=$GITHUB_ACCESS_TOKEN' -auto-approve", returnStatus: true)
       } catch(Exception e) {
         currentBuild.result = 'FAILURE'
         echo "Exception: ${e}"
