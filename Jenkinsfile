@@ -42,6 +42,7 @@ node {
     if (pull_request) {
       checkout("$clone_url", target_branch)
       init()
+      validate()
       plan()
       if("$merged".toBoolean()) {
         apply()
@@ -106,6 +107,19 @@ def init() {
     } catch(Exception e) {
       currentBuild.result = 'FAILURE'
       echo "Exception: ${e}"
+    }
+  }
+}
+
+def validate() {
+  stage('Validate') {
+    withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
+      try {
+        def plan_command = sh(script: "terraform validate", returnStatus: true)
+      } catch(Exception e) {
+        currentBuild.result = 'FAILURE'
+        echo "Exception: ${e}"
+      }
     }
   }
 }
