@@ -41,9 +41,7 @@ node {
   try {
     if (pull_request) {
       checkout("$clone_url", target_branch)
-      test()
-      runSecretsScanner()
-      // runSonarScanner()
+      plan()
       if("$merged".toBoolean()) {
         build()
       }
@@ -97,24 +95,13 @@ def checkout(repo, branch) {
         url: repo
       ]]
     ])
-    sh "npm i ."
   }
 }
 
-def build() {
-  stage('Build Artifacts') {
+def plan() {
+  stage('Terraform Plan') {
     try {
-      def build_command = sh(script: "npm run-script build", returnStatus: true)
-    } catch(Exception e) {
-      echo "Exception: ${e}"
-    }
-  }
-}
-
-def test() {
-  stage('Unit Tests') {
-    try {
-      def tests_command = sh(script: "npm test", returnStatus: true)
+      def plan_command = sh(script: "terraform plan -var='github_token=$GITHUB_ACCESS_TOKEN'", returnStatus: true)
     } catch(Exception e) {
       echo "Exception: ${e}"
     }
@@ -123,14 +110,4 @@ def test() {
 
 def notifyBuild(currentBuild = 'SUCCESS') {
 
-}
-
-def runSecretsScanner() {
-  stage('Secrets Scan') {
-    try {
-      def secrets_command = sh(script: "git secrets --scan -r ./src", returnStatus: true)
-    } catch(Exception e) {
-      echo "Exception: ${e}"
-    }
-  }
 }
