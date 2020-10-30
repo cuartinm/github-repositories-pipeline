@@ -18,26 +18,19 @@ withCredentials([string(credentialsId: 'GH_GENERIC_WEBHOOK_TOKEN', variable: 'GH
         causeString: "Triggered on $action pull request",
         printPostContent: false,
         printContributedVariables: false,
+        regexpFilterExpression: '^((false (opened|reopened|synchronize))|(true (closed)))? (develop|master)?$',
+        regexpFilterText: '$merged $action $base_branch'
       ]
     ])
   ])
 }
 
 node {
-  def error = null
-  def target_branch = ""
-  def pull_request = true
 
-  switch("$action") {
-    case "opened":
-      target_branch = "$head_branch"
-      break
-    case "closed":
-      target_branch = "$base_branch"
-      break
-    default:
-      pull_request = false
-      break
+  def target_branch = "$head_branch"
+
+  if ("$action" == "closed") {
+    target_branch = "$base_branch"
   }
   
   try {
@@ -101,24 +94,14 @@ def checkout(repo, branch) {
 
 def init() {
   stage('Init') {
-    try {
-      def plan_command = sh(script: "terraform init", returnStatus: true)
-    } catch(Exception e) {
-      currentBuild.result = 'FAILURE'
-      echo "Exception: ${e}"
-    }
+    def plan_command = sh(script: "terraform init", returnStatus: true)
   }
 }
 
 def validate() {
   stage('Validate') {
     withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
-      try {
-        def plan_command = sh(script: "terraform validate", returnStatus: true)
-      } catch(Exception e) {
-        currentBuild.result = 'FAILURE'
-        echo "Exception: ${e}"
-      }
+      def plan_command = sh(script: "terraform validate", returnStatus: true)
     }
   }
 }
@@ -126,12 +109,7 @@ def validate() {
 def plan() {
   stage('Plan') {
     withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
-      try {
-        def plan_command = sh(script: "terraform plan -var='github_token=$GITHUB_ACCESS_TOKEN'", returnStatus: true)
-      } catch(Exception e) {
-        currentBuild.result = 'FAILURE'
-        echo "Exception: ${e}"
-      }
+      def plan_command = sh(script: "terraform plan -var='github_token=$GITHUB_ACCESS_TOKEN'", returnStatus: true)
     }
   }
 }
@@ -139,16 +117,7 @@ def plan() {
 def apply() {
   stage('Apply') {
     withCredentials([string(credentialsId: 'GITHUB_ACCESS_TOKEN', variable: 'GITHUB_ACCESS_TOKEN')]) {
-      try {
-        def plan_command = sh(script: "terraform apply -var='github_token=$GITHUB_ACCESS_TOKEN' -auto-approve", returnStatus: true)
-      } catch(Exception e) {
-        currentBuild.result = 'FAILURE'
-        echo "Exception: ${e}"
-      }
+      def plan_command = sh(script: "terraform apply -var='github_token=$GITHUB_ACCESS_TOKEN' -auto-approve", returnStatus: true)
     }
   }
-}
-
-def notifyBuild(currentBuild = 'SUCCESS') {
-
 }
